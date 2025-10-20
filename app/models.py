@@ -38,7 +38,7 @@ class Battle(Base):
         ForeignKey("players.user_code", ondelete="CASCADE")
     )
     battle_type: Mapped[str] = mapped_column(String(50))
-    battle_time: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    battle_time: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     raw_data: Mapped[dict] = mapped_column(JSON)  # store raw API payload (optional)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
@@ -49,7 +49,7 @@ class Battle(Base):
 class Deck(Base):
     __tablename__ = "decks"
 
-    id: Mapped[int] = mapped_column(
+    deck_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, autoincrement=True
     )
     player_code: Mapped[str] = mapped_column(
