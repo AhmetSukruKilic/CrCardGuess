@@ -1,8 +1,5 @@
-import socket
 import requests
-import urllib3.util.connection as urllib3_connection
 from api_config import CR_API, BASE_URL
-import socket
 import requests
 
 
@@ -75,6 +72,8 @@ def main():
                 opponent_cards = [c.get("name") for c in opp.get("cards", [])]
 
             print(f"Your Cards: {team_cards} vs \nEnemy Cards: {opponent_cards}\n\n\n")
+
+    print(len(battle_log))
 
 
 if __name__ == "__main__":
