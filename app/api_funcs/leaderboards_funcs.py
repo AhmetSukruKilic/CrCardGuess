@@ -1,5 +1,5 @@
 import requests
-from api_config import CR_API, BASE_URL
+from api_config import HEADERS, BASE_URL
 from player_funcs import (
     get_player_battlelog,
     get_team_cards_from_battles,
@@ -13,10 +13,7 @@ def get_top_players_at_season(season_id, limit=100):
     )
     url = f"{BASE_URL}/{after_fix}"
 
-    headers = {
-        "Authorization": f"Bearer {CR_API}",
-    }
-    resp = requests.get(url, headers=headers, timeout=20)
+    resp = requests.get(url, headers=HEADERS, timeout=20)
     if resp.status_code == 200:
         return resp.json()
     print("Error:", resp.status_code, resp.text[:300])
@@ -27,10 +24,7 @@ def get_season_idies():
     after_fix = "locations/global/seasonsV2"
     url = f"{BASE_URL}/{after_fix}"
 
-    headers = {
-        "Authorization": f"Bearer {CR_API}",
-    }
-    resp = requests.get(url, headers=headers, timeout=20)
+    resp = requests.get(url, headers=HEADERS, timeout=20)
     if resp.status_code == 200:
         return resp.json()
     print("Error:", resp.status_code, resp.text[:300])

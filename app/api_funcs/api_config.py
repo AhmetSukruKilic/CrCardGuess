@@ -10,6 +10,11 @@ except Exception:
     pass
 
 CR_API = os.getenv("CR_API")
+
+HEADERS = {
+    "Authorization": f"Bearer {CR_API}",
+}
+
 if not CR_API:
     raise RuntimeError("CR_API env var is missing. Set it in .env or your shell.")
 
