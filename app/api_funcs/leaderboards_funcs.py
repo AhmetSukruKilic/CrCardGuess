@@ -7,19 +7,6 @@ from player_funcs import (
 )
 
 
-def get_top_players_at_season(season_id, limit=100):
-    after_fix = (
-        f"locations/global/pathoflegend/{season_id}/rankings/players?limit={limit}"
-    )
-    url = f"{BASE_URL}/{after_fix}"
-
-    resp = requests.get(url, headers=HEADERS, timeout=20)
-    if resp.status_code == 200:
-        return resp.json()
-    print("Error:", resp.status_code, resp.text[:300])
-    return None
-
-
 def get_season_idies():
     after_fix = "locations/global/seasonsV2"
     url = f"{BASE_URL}/{after_fix}"
@@ -58,6 +45,19 @@ def main():
                 )
     else:
         print("Player data could not be retrieved.")
+
+
+def get_top_players_at_season(season_id=get_latest_season_id(), limit=100):
+    after_fix = (
+        f"locations/global/pathoflegend/{season_id}/rankings/players?limit={limit}"
+    )
+    url = f"{BASE_URL}/{after_fix}"
+
+    resp = requests.get(url, headers=HEADERS, timeout=20)
+    if resp.status_code == 200:
+        return resp.json()
+    print("Error:", resp.status_code, resp.text[:300])
+    return None
 
 
 if __name__ == "__main__":

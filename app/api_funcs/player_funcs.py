@@ -32,7 +32,7 @@ def get_player(player_tag):
     return None
 
 
-def get_player_battlelog(player_tag):
+def get_player_battlelog(player_tag) -> dict:
     if player_tag is None:
         raise ValueError("player_tag must be provided")
 
@@ -53,11 +53,12 @@ def get_player_battlelog(player_tag):
 
 def main():
     player = get_player("#Q8PRJJ92")
-    battle_log = get_player_battlelog("#Q8PRJJ92")
     if player:
         print(f"{player.get('tag')} — {player.get('name')}")
     else:
         print("Player data could not be retrieved.")
+
+    battle_log = get_player_battlelog("#Q8PRJJ92")
 
     if battle_log and player:
         for battle in battle_log[:5]:

@@ -1,0 +1,35 @@
+services:
+  api:
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    env_file: [.env]
+    depends_on:
+      db:
+        condition: service_healthy        
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: cr_card_app
+      MYSQL_USER: cr_card_app
+      MYSQL_PASSWORD: cr_card_app
+    ports: ["3307:3306"]
+    volumes:
+      - mysqldata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -ucr_card_app -pcr_card_app -h 127.0.0.1 --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    ports: ["8080:8080"]
+    restart: unless-stopped
+
+volumes:
+  mysqldata:

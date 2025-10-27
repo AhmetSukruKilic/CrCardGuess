@@ -2,7 +2,7 @@ from sqlalchemy import Integer, String, ForeignKey, DateTime, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
 
-from .database import Base
+from database import Base
 
 
 class Player(Base):
@@ -10,7 +10,7 @@ class Player(Base):
 
     user_code: Mapped[str] = mapped_column(String(50), primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-
+    rank: Mapped[int] = mapped_column(Integer, nullable=True)
     # Relationships
     decks: Mapped[list["Deck"]] = relationship("Deck", back_populates="player")
     battles: Mapped[list["Battle"]] = relationship("Battle", back_populates="player")
@@ -21,7 +21,6 @@ class Card(Base):
 
     card_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    rarity: Mapped[str] = mapped_column(String(50))
     photo_url: Mapped[str] = mapped_column(String(255))
 
     # Optional backref to decks if you add a many-to-many later
@@ -55,10 +54,10 @@ class Deck(Base):
     player_code: Mapped[str] = mapped_column(
         ForeignKey("players.user_code", ondelete="CASCADE")
     )
-    card_ids: Mapped[str] = mapped_column(
-        String(255), nullable=False
-    )  # comma-separated card IDs
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     # Relationships
     player: Mapped["Player"] = relationship("Player", back_populates="decks")
+    cards: Mapped[list[Card]] = relationship(
+        "Card", secondary="deck_cards", back_populates="decks"
+    )
