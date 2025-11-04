@@ -1,11 +1,11 @@
+from database import SessionLocal
 
-from app.database import SessionLocal
+from models import Deck
 
-from app.models import Deck,
 
 def get_player_decks(player):
     db = SessionLocal()
-    
+
     return (
         db.query(Deck)
         .filter(

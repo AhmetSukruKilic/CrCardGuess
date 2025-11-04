@@ -1,11 +1,7 @@
-import os
-import sys
 import requests
-from api_config import HEADERS, BASE_URL
 import requests
 
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.append(parent_dir)
+from api_config import HEADERS, BASE_URL
 
 from helper_battle_funcs import (
     get_team_cards_from_battles,

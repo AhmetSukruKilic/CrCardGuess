@@ -1,4 +1,4 @@
-from app.helper_card_funcs import create_deck
+from helper_card_funcs import create_deck
 
 
 def get_team_cards_from_battles(battle):

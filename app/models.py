@@ -24,7 +24,7 @@ class Card(Base):
     photo_url: Mapped[str] = mapped_column(String(255))
 
     # Optional backref to decks if you add a many-to-many later
-    # decks = relationship("Deck", secondary="deck_cards", back_populates="cards")
+    decks = relationship("Deck", secondary="deck_cards", back_populates="cards")
 
 
 class Battle(Base):

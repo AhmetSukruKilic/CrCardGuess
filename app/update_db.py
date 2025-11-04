@@ -1,12 +1,12 @@
-from app.helper_deck_funcs import get_player_decks
-from database import SessionLocal
-from app.models import Card, Deck, Player, Battle
-from app.api_funcs.leaderboards_funcs import get_top_players_at_season
-from app.api_funcs.player_funcs import get_player_battlelog
-from app.helper_battle_funcs import (
+from leaderboards_funcs import get_top_players_at_season
+from player_funcs import get_player_battlelog
+from helper_battle_funcs import (
     get_team_cards_from_battles,
     get_opponent_cards_from_battles,
 )
+from database import SessionLocal
+from models import Card, Deck, Player, Battle
+from helper_deck_funcs import get_player_decks
 
 
 def update_database_1v1(players: list[Player]):
@@ -23,7 +23,9 @@ def update_database_1v1(players: list[Player]):
             )
 
             update_match_history_1v1(player, opponent_player, match)
-            update_decks(player, match)
+
+            update_team_decks_1v1(player, match)
+            update_opponent_decks_1v1(opponent_player, match)
     db.close()
 
 
@@ -46,14 +48,12 @@ def update_players(player: Player):
     return player
 
 
-def update_decks(player: Player, opponent: Player, match: dict):
+def update_team_decks_1v1(player: Player, match: dict):
     db = SessionLocal()
 
     team_cards: list[Card] = get_team_cards_from_battles(match)[0]
-    opponent_cards: list[Card] = get_opponent_cards_from_battles(match)[0]
 
     player_decks = get_player_decks(player)
-    opponent_decks = get_player_decks(opponent)
 
     for existing_deck in player_decks:
         if existing_deck.cards == team_cards:
@@ -63,6 +63,17 @@ def update_decks(player: Player, opponent: Player, match: dict):
             player_code=player.user_code,
         )
         db.add(new_deck)
+
+    db.commit()
+    db.close()
+
+
+def update_opponent_decks_1v1(opponent: Player, match: dict):
+    db = SessionLocal()
+
+    opponent_cards: list[Card] = get_opponent_cards_from_battles(match)[0]
+
+    opponent_decks = get_player_decks(opponent)
 
     for existing_deck in opponent_decks:
         if existing_deck.cards == opponent_cards:
@@ -78,9 +89,6 @@ def update_decks(player: Player, opponent: Player, match: dict):
 
 def update_match_history_1v1(player: Player, match: dict):
     db = SessionLocal()
-
-    if match.get("battle_type") != "1v1":
-        return
 
     existing_battle = (
         db.query(Battle)
@@ -101,3 +109,23 @@ def update_match_history_1v1(player: Player, match: dict):
         db.add(new_battle)
     db.commit()
     db.close()
+
+
+def main():
+    db = SessionLocal()
+    top_players = get_top_players_at_season()
+    players = []
+    for p in top_players.get("items", []):
+        player = Player(
+            user_code=p["tag"],
+            name=p["name"],
+            rank=p.get("rank"),
+        )
+        players.append(player)
+    db.close()
+
+    update_database_1v1(players)
+
+
+if __name__ == "__main__":
+    main()

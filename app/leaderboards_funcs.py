@@ -1,4 +1,5 @@
 import requests
+
 from api_config import HEADERS, BASE_URL
 from player_funcs import (
     get_player_battlelog,

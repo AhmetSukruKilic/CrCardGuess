@@ -1,5 +1,5 @@
-from app.database import SessionLocal
-from app.models import Card
+from database import SessionLocal
+from models import Card
 
 
 def create_deck(cards: list[str]):
