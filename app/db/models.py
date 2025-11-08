@@ -1,7 +1,7 @@
 from sqlalchemy import Integer, String, ForeignKey, JSON, Index
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
-from app.db_methods.database import Base, engine
+from app.db.database import Base, engine
 from sqlalchemy import event, select, func
 from sqlalchemy.dialects.mysql import DATETIME
 

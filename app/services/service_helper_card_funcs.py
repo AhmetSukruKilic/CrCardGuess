@@ -1,4 +1,4 @@
-from app.db_methods.models import Card
+from app.db.models import Card
 
 cached_cards = {}
 

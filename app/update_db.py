@@ -10,8 +10,8 @@ from app.services.service_battle_funcs import (
     BATTLE_TYPE,
     BATTLE_TIME,
 )
-from app.db_methods.database import SessionLocal
-from app.db_methods.models import Card, Deck, Player, Battle
+from app.db.database import SessionLocal
+from app.db.models import Card, Deck, Player, Battle
 from app.services.service_time_funcs import to_mysql_datetime
 from app.api_funcs.api_config import health_check
 from app.services.service_helper_player_funcs import new_player

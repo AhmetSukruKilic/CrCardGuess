@@ -1,6 +1,6 @@
-from app.db_methods.models import Card
+from app.db.models import Card
 from app.services.service_helper_card_funcs import create_sorted_cards
-from app.db_methods.models import Player
+from app.db.models import Player
 from app.services.service_helper_player_funcs import get_teammates, get_opponents
 
 BATTLE_TYPE = "type"

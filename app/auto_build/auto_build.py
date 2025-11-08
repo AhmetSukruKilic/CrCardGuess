@@ -1,7 +1,7 @@
 from app.api_funcs.api_card_funcs import get_cards
 from app.api_funcs.api_config import health_check
-from app.db_methods.models import Card
-from app.db_methods.database import SessionLocal
+from app.db.models import Card
+from app.db.database import SessionLocal
 from sqlalchemy.exc import IntegrityError
 
 

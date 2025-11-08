@@ -1,4 +1,4 @@
-from app.db_methods.models import Player
+from app.db.models import Player
 
 
 def get_teammates(match: dict) -> list[dict]:
