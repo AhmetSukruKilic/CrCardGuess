@@ -1,5 +1,5 @@
 import requests
-from api_config import HEADERS, BASE_URL
+from api_config import HEADERS, BASE_URL, health_check
 
 
 def get_cards():
@@ -8,15 +8,18 @@ def get_cards():
 
     resp = requests.get(url, headers=HEADERS, timeout=20)
     if resp.status_code == 200:
-        return resp.json()
+        return resp.json().get("items", [])
     print("Error:", resp.status_code, resp.text[:300])
     return None
 
 
 def main():
+    if not health_check():
+        return
+
     cards = get_cards()
     if cards:
-        for card in cards.get("items", []):
+        for card in cards:
             print(
                 f"{card.get('id')} — {card.get('name')} — Rarity: {card.get('rarity')}"
             )
