@@ -1,7 +1,7 @@
-from models import Card
-from service_helper_card_funcs import create_deck
-from models import Player
-from service_helper_player_funcs import get_teammates, get_opponents
+from app.db_methods.models import Card
+from app.services.service_helper_card_funcs import create_deck
+from app.db_methods.models import Player
+from app.services.service_helper_player_funcs import get_teammates, get_opponents
 
 BATTLE_TYPE = "type"
 BATTLE_TIME = "battleTime"

@@ -1,5 +1,5 @@
 import requests
-from api_config import HEADERS, BASE_URL, health_check
+from app.api_funcs.api_config import HEADERS, BASE_URL, health_check
 
 
 def get_cards():

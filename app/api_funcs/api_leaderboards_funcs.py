@@ -1,8 +1,11 @@
 import requests
 
-from api_config import HEADERS, BASE_URL, health_check
-from service_battle_funcs import get_first_enemy_cards, get_first_teammate_cards
-from api_player_funcs import (
+from app.api_funcs.api_config import HEADERS, BASE_URL, health_check
+from app.services.service_battle_funcs import (
+    get_first_enemy_cards,
+    get_first_teammate_cards,
+)
+from app.api_funcs.api_player_funcs import (
     get_player_battlelog,
 )
 
@@ -25,7 +28,7 @@ def get_latest_season_id():
     return None
 
 
-def get_top_players_at_season(season_id=get_latest_season_id(), limit=100):
+def get_top_players_at_season(season_id=get_latest_season_id(), limit=300):
     after_fix = (
         f"locations/global/pathoflegend/{season_id}/rankings/players?limit={limit}"
     )

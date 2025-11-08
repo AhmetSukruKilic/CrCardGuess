@@ -1,8 +1,11 @@
 import requests
 
-from api_config import HEADERS, BASE_URL, health_check
+from app.api_funcs.api_config import HEADERS, BASE_URL, health_check
 
-from service_battle_funcs import get_first_teammate_cards, get_first_enemy_cards
+from app.services.service_battle_funcs import (
+    get_first_teammate_cards,
+    get_first_enemy_cards,
+)
 
 
 def adjust_player_tag(player_tag):

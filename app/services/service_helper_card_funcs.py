@@ -1,4 +1,4 @@
-from models import Card
+from app.db_methods.models import Card
 
 
 def create_deck(db, cards: list[str]) -> list[Card]:

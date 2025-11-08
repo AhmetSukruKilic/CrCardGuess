@@ -1,8 +1,8 @@
-from service_helper_card_funcs import get_cards_by_ids
-from auto_build import register_new_cards
-from api_leaderboards_funcs import get_top_players_at_season
-from api_player_funcs import get_player_battlelog
-from service_battle_funcs import (
+from app.services.service_helper_card_funcs import get_cards_by_ids
+from app.auto_build.auto_build import register_new_cards
+from app.api_funcs.api_leaderboards_funcs import get_top_players_at_season
+from app.api_funcs.api_player_funcs import get_player_battlelog
+from app.services.service_battle_funcs import (
     get_first_enemy_cards,
     get_first_teammate_cards,
     get_first_opponent_player,
@@ -10,12 +10,12 @@ from service_battle_funcs import (
     BATTLE_TYPE,
     BATTLE_TIME,
 )
-from database import SessionLocal
-from models import Deck, Player, Battle
-from service_time_funcs import to_mysql_datetime
-from api_config import health_check
-from service_helper_player_funcs import new_player
-from service_ui_funcs import print_status_bar
+from app.db_methods.database import SessionLocal
+from app.db_methods.models import Deck, Player, Battle
+from app.services.service_time_funcs import to_mysql_datetime
+from app.api_funcs.api_config import health_check
+from app.services.service_helper_player_funcs import new_player
+from app.services.service_ui_funcs import print_status_bar
 
 
 def update_database_1v1(players: list[Player]):
