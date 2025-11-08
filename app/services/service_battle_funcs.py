@@ -1,5 +1,5 @@
 from app.db_methods.models import Card
-from app.services.service_helper_card_funcs import create_deck
+from app.services.service_helper_card_funcs import create_sorted_cards
 from app.db_methods.models import Player
 from app.services.service_helper_player_funcs import get_teammates, get_opponents
 
@@ -13,7 +13,7 @@ def get_team_cards_from_battles(db, battle) -> list[list[Card]]:
 
     for member in members:
         member_cards = [c.get("name") for c in member.get("cards", [])]
-        player_cards.append(create_deck(db, member_cards))
+        player_cards.append(create_sorted_cards(db, member_cards))
     return player_cards
 
 
@@ -23,7 +23,7 @@ def get_opponent_cards_from_battles(db, battle) -> list[list[Card]]:
 
     for member in members:
         member_cards = [c.get("name") for c in member.get("cards", [])]
-        opponent_cards.append(create_deck(db, member_cards))
+        opponent_cards.append(create_sorted_cards(db, member_cards))
     return opponent_cards
 
 

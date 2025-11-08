@@ -1,4 +1,4 @@
-from app.services.service_helper_card_funcs import get_cards_by_ids
+from app.services.service_helper_card_funcs import create_sorted_cards
 from app.auto_build.auto_build import register_new_cards
 from app.api_funcs.api_leaderboards_funcs import get_top_players_at_season
 from app.api_funcs.api_player_funcs import get_player_battlelog
@@ -11,7 +11,7 @@ from app.services.service_battle_funcs import (
     BATTLE_TIME,
 )
 from app.db_methods.database import SessionLocal
-from app.db_methods.models import Deck, Player, Battle
+from app.db_methods.models import Card, Deck, Player, Battle
 from app.services.service_time_funcs import to_mysql_datetime
 from app.api_funcs.api_config import health_check
 from app.services.service_helper_player_funcs import new_player
@@ -100,9 +100,9 @@ def update_team_decks_1v1(db, player: Player, match: dict):
 
 def update_opponent_decks_1v1(db, opponent: Player, match: dict):
     opponent_cards = get_first_enemy_cards(db, match)
-    card_ids = _ensure_card_ids(opponent_cards)
+    sorted_cards = create_sorted_cards(db, opponent_cards)
 
-    deck = save_deck(db, card_ids, opponent.user_code)
+    deck = save_deck(db, sorted_cards, opponent.user_code)
 
     return deck
 
@@ -116,19 +116,17 @@ def norm_tag(tag: str) -> str:
     return tag if tag.startswith("#") else f"#{tag}"
 
 
-def save_deck(db, card_ids: list[int], player_code: str) -> Deck:
+def save_deck(db, cards: list[Card], player_code: str) -> Deck:
     player_code = norm_tag(player_code)
 
-    sig = compute_signature(card_ids)
+    sig = compute_signature(card.card_id for card in cards)
 
     deck = db.query(Deck).filter_by(signature=sig).first()
     if not deck:
         deck = Deck(signature=sig)
         db.add(deck)
-        cards = get_cards_by_ids(db, card_ids)
         if len(cards) != 8:
-            missing = set(card_ids) - {c.card_id for c in cards}
-            raise ValueError(f"Expected 8 cards, missing: {missing}")
+            raise ValueError(f"Expected 8 cards, got {len(cards)}")
         deck.cards.extend(cards)
         db.flush()  # assigns deck.deck_id
 

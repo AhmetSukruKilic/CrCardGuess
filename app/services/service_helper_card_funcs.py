@@ -1,7 +1,9 @@
 from app.db_methods.models import Card
 
+cached_cards = {}
 
-def create_deck(db, cards: list[str]) -> list[Card]:
+
+def create_sorted_cards(db, cards: list[str]) -> list[Card]:
     card_list = []
     for card_name in cards:
         card = get_card_by_name(db, card_name)
@@ -12,10 +14,21 @@ def create_deck(db, cards: list[str]) -> list[Card]:
 
 
 def get_card_by_name(db, card_name: str) -> Card | None:
+    for card in cached_cards.values():
+        if card.name == card_name:
+            return card
     card = db.query(Card).filter(Card.name == card_name).first()
+    if card:
+        cached_cards[card] = card
     return card
 
 
-def get_cards_by_ids(db, card_ids: list[int]) -> list[Card]:
-    cards = db.query(Card).filter(Card.card_id.in_(card_ids)).all()
-    return cards
+def get_card_by_id(db, card_id: int) -> Card | None:
+    for card in cached_cards.values():
+        if card.card_id == card_id:
+            print(1)
+            return card
+    card = db.query(Card).filter(Card.card_id == card_id).first()
+    if card:
+        cached_cards[card] = card
+    return card
