@@ -1,6 +1,7 @@
 import requests
 
 from app.api_funcs.api_config import HEADERS, BASE_URL, health_check
+from app.db.database import SessionLocal
 from app.services.service_battle_funcs import (
     get_first_enemy_cards,
     get_first_teammate_cards,
@@ -28,7 +29,7 @@ def get_latest_season_id():
     return None
 
 
-def get_top_players_at_season(season_id=get_latest_season_id(), limit=300):
+def get_top_players_at_season(season_id=get_latest_season_id(), limit=500):
     after_fix = (
         f"locations/global/pathoflegend/{season_id}/rankings/players?limit={limit}"
     )
@@ -48,7 +49,8 @@ def main():
     season_id = get_latest_season_id()
     print("Latest Season ID:", season_id)
 
-    top_players = get_top_players_at_season(season_id, limit=10)
+    top_players = get_top_players_at_season(season_id, limit=1000)
+    db = SessionLocal()
     if top_players:
         for player in top_players:
             tag = player.get("tag")
@@ -58,10 +60,10 @@ def main():
             battle_log = get_player_battlelog(tag)
             for battle in battle_log[:3]:
                 print(f"Your cards:")
-                for card in get_first_teammate_cards(battle):
+                for card in get_first_teammate_cards(db, battle):
                     print(f" {card.name} ", end="")
                 print(f"\n\nEnemy cards:")
-                for card in get_first_enemy_cards(battle):
+                for card in get_first_enemy_cards(db, battle):
                     print(f" {card.name} ", end="")
                 print("\n\n")
     else:

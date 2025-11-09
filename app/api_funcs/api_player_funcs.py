@@ -2,6 +2,7 @@ import requests
 
 from app.api_funcs.api_config import HEADERS, BASE_URL, health_check
 
+from app.db.database import SessionLocal
 from app.services.service_battle_funcs import (
     get_first_teammate_cards,
     get_first_enemy_cards,
@@ -62,15 +63,14 @@ def main():
     else:
         print("Player data could not be retrieved.")
     tag = player.get("tag")
-    name = player.get("name")
-
+    db = SessionLocal()
     battle_log = get_player_battlelog(tag)
     for battle in battle_log[:3]:
         print(f"Your cards:")
-        for card in get_first_teammate_cards(battle):
+        for card in get_first_teammate_cards(db, battle):
             print(f" {card.name} ", end="")
         print(f"\n\nEnemy cards:")
-        for card in get_first_enemy_cards(battle):
+        for card in get_first_enemy_cards(db, battle):
             print(f" {card.name} ", end="")
         print("\n\n")
 

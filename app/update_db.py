@@ -28,7 +28,7 @@ def update_database_1v1(players: list[Player]):
     with SessionLocal() as db:
         with db.begin():  # single commit at the end
             length = len(players)
-            index = 0
+            index = -1
             for player in players:
                 index += 1
                 # simple console progress bar
@@ -91,9 +91,9 @@ def _ensure_card_ids(card_objs) -> list[int]:
 
 def update_team_decks_1v1(db, player: Player, match: dict):
     team_cards = get_first_teammate_cards(db, match)
-    card_ids = _ensure_card_ids(team_cards)
+    sorted_cards = create_sorted_cards(db, team_cards)
 
-    deck = save_deck(db, card_ids, player.user_code)
+    deck = save_deck(db, sorted_cards, player.user_code)
 
     return deck
 
