@@ -51,6 +51,14 @@ class Card(Base):
         "Deck", secondary="deck_cards", back_populates="cards"
     )
 
+    winrate: Mapped["CardWinrate"] = relationship(
+        "CardWinrate",
+        back_populates="card",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
 
 class Battle(Base):  # 1v1 battle record
     __tablename__ = "battles"
@@ -202,8 +210,6 @@ class PlayerDeck(Base):
     deck_id: Mapped[int] = mapped_column(
         ForeignKey("decks.deck_id", ondelete="CASCADE"), primary_key=True
     )
-    player: Mapped["Player"] = relationship("Player", back_populates="decks")
-    deck: Mapped["Deck"] = relationship("Deck", back_populates="players")
 
 
 class DeckCard(Base):
@@ -214,8 +220,6 @@ class DeckCard(Base):
     card_id: Mapped[int] = mapped_column(
         ForeignKey("cards.card_id", ondelete="CASCADE"), primary_key=True
     )
-    deck: Mapped["Deck"] = relationship("Deck", back_populates="cards")
-    card: Mapped["Card"] = relationship("Card", back_populates="decks")
 
     @classmethod
     def __declare_last__(cls):

@@ -97,3 +97,15 @@ def get_second_opponent_player(db, match: dict) -> Player | None:
         db.query(Player).filter(Player.user_code == opponents.get("tag")).first()
     )
     return opponent_player if opponent_player else None
+
+
+team_crowns = lambda match: get_first_teammate_data(match).get("crowns", 0)
+opponent_crowns = lambda match: get_first_opponent_data(match).get("crowns", 0)
+
+
+def is_winner_team(match: dict) -> bool:
+    return team_crowns(match) >= opponent_crowns(match)
+
+
+def is_loser_team(match: dict) -> bool:
+    return not is_winner_team(match)

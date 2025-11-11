@@ -15,3 +15,8 @@ def new_player(player_data: dict) -> Player:
         name=player_data["name"],
         rank=player_data.get("rank"),
     )
+
+
+def norm_tag(tag: str) -> str:
+    tag = tag.strip()
+    return tag if tag.startswith("#") else f"#{tag}"

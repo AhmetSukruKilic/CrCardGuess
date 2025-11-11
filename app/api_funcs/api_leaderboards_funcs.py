@@ -29,7 +29,7 @@ def get_latest_season_id():
     return None
 
 
-def get_top_players_at_season(season_id=get_latest_season_id(), limit=500):
+def get_top_players_at_season(season_id=get_latest_season_id(), limit=350):
     after_fix = (
         f"locations/global/pathoflegend/{season_id}/rankings/players?limit={limit}"
     )

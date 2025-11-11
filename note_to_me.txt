@@ -1,0 +1,2 @@
+python3 -m app.api_funcs.api_leaderboards_funcs               
+python3 -m app.update_db
