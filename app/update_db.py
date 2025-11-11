@@ -9,32 +9,44 @@ from app.services.service_battle_funcs import (
     get_first_opponent_data,
     BATTLE_TYPE,
     BATTLE_TIME,
+    is_winner_team,
 )
 from app.db.database import SessionLocal
 from app.db.models import Card, Deck, Player, Battle
+from app.services.service_helper_deck_funcs import compute_signature
 from app.services.service_time_funcs import to_mysql_datetime
 from app.api_funcs.api_config import health_check
-from app.services.service_helper_player_funcs import new_player
+from app.services.service_helper_player_funcs import new_player, norm_tag
 from app.services.service_ui_funcs import print_status_bar
+from app.db.models import DeckWinrate
+
+
+from collections import defaultdict
+from app.db.models import CardWinrate, DeckWinrate  # make sure these exist
 
 
 def update_database_1v1(players: list[Player]):
-
     if not health_check():
         return
 
     register_new_cards()
 
+    totals = {"new": 0, "existing": 0}
+    deck_results: list[tuple[Deck, Deck]] = []
+    card_counts: dict[int, list[int]] = defaultdict(
+        lambda: [0, 0]
+    )  # card_id -> [wins, losses]
+
     with SessionLocal() as db:
-        with db.begin():  # single commit at the end
+        with db.begin():
             length = len(players)
-            index = 0
+            index = -1
             for player in players:
                 index += 1
-                # simple console progress bar
                 print_status_bar(length, index)
+
                 update_players(db, player)
-                db.flush()  # ensure Player row exists
+                db.flush()
 
                 match_history = get_player_battlelog(player.user_code)
 
@@ -46,19 +58,103 @@ def update_database_1v1(players: list[Player]):
                     if opponent_player is None:
                         opponent_player = new_player(get_first_opponent_data(match))
                     update_players(db, opponent_player)
-                    db.flush()  # ensure Player row exists
+                    db.flush()
 
                     deck1 = update_team_decks_1v1(db, player, match)
                     deck2 = update_opponent_decks_1v1(db, opponent_player, match)
 
-                    update_match_history_1v1(
+                    is_existing, winner_deck, loser_deck = update_match_history_1v1(
                         db, (player, deck1), (opponent_player, deck2), match
                     )
 
-            db.commit()
+                    if is_existing:
+                        totals["existing"] += 1
+                        continue
+
+                    totals["new"] += 1
+
+                    # collect deck result
+                    deck_results.append((winner_deck, loser_deck))
+
+                    # collect per-card tallies
+                    for c in winner_deck.cards:
+                        card_counts[c.card_id][0] += 1  # win
+                    for c in loser_deck.cards:
+                        card_counts[c.card_id][1] += 1  # loss
+
+            # single write phase
+            update_deck_winrates(db, deck_results)
+            update_card_winrates(db, card_counts)
+
             db.flush()
             db.expunge_all()
-            db.close()
+
+            index += 1
+            print_status_bar(length, index)
+
+            print(
+                f"\n\ntotal_fights {totals['existing'] + totals['new']}"
+                + f"| existing_fights {totals['existing']} | new_fights {totals['new']}"
+            )
+
+
+def update_deck_winrates(db, deck_results: list[tuple[Deck, Deck]]):
+    if not deck_results:
+        return
+    # prefetch existing rows
+    deck_ids = {d.deck_id for tup in deck_results for d in tup}
+    existing = {
+        r.deck_id: r
+        for r in db.query(DeckWinrate).filter(DeckWinrate.deck_id.in_(deck_ids))
+    }
+    # ensure rows exist
+    for did in deck_ids:
+        if did not in existing:
+            row = DeckWinrate(deck_id=did, wins=0, losses=0)
+            db.add(row)
+            existing[did] = row
+
+    # increment
+    for winner_deck, loser_deck in deck_results:
+        existing[winner_deck.deck_id].wins = (
+            existing[winner_deck.deck_id].wins or 0
+        ) + 1
+        existing[loser_deck.deck_id].losses = (
+            existing[loser_deck.deck_id].losses or 0
+        ) + 1
+
+
+from app.db.models import CardWinrate
+
+
+def update_card_winrates(db, card_counts: dict[int, list[int]]):
+    if not card_counts:
+        return
+
+    card_ids = list(card_counts.keys())
+
+    # 1) Prefetch existing rows once
+    existing = {
+        r.card_id: r
+        for r in db.query(CardWinrate).filter(CardWinrate.card_id.in_(card_ids))
+    }
+
+    # 2) Create missing rows once
+    to_create = []
+    for cid in card_ids:
+        if cid not in existing:
+            row = CardWinrate(card_id=cid, wins=0, losses=0)
+            db.add(row)
+            existing[cid] = row
+            to_create.append(cid)
+
+    db.flush()
+
+    # 3) Increment
+    for cid, (wins_inc, losses_inc) in card_counts.items():
+        row = existing[cid]
+        row.wins = (row.wins or 0) + int(wins_inc)
+        row.losses = (row.losses or 0) + int(losses_inc)
 
 
 def update_players(db, player: Player):
@@ -77,23 +173,11 @@ def update_players(db, player: Player):
     return player
 
 
-def _ensure_card_ids(card_objs) -> list[int]:
-    ids = []
-    for c in card_objs:
-        if hasattr(c, "card_id"):
-            ids.append(int(c.card_id))
-        elif isinstance(c, dict) and "card_id" in c:
-            ids.append(int(c["card_id"]))
-        else:
-            raise TypeError(f"Cannot extract card_id from {c!r}")
-    return ids
-
-
 def update_team_decks_1v1(db, player: Player, match: dict):
     team_cards = get_first_teammate_cards(db, match)
-    card_ids = _ensure_card_ids(team_cards)
+    sorted_cards = create_sorted_cards(db, team_cards)
 
-    deck = save_deck(db, card_ids, player.user_code)
+    deck = save_deck(db, sorted_cards, player.user_code)
 
     return deck
 
@@ -105,15 +189,6 @@ def update_opponent_decks_1v1(db, opponent: Player, match: dict):
     deck = save_deck(db, sorted_cards, opponent.user_code)
 
     return deck
-
-
-def compute_signature(card_ids: list[int] | set[int]) -> str:
-    return "-".join(str(int(i)) for i in sorted({int(x) for x in card_ids}))
-
-
-def norm_tag(tag: str) -> str:
-    tag = tag.strip()
-    return tag if tag.startswith("#") else f"#{tag}"
 
 
 def save_deck(db, cards: list[Card], player_code: str) -> Deck:
@@ -147,7 +222,7 @@ def update_match_history_1v1(
     player_and_deck_1: tuple[Player, Deck],
     player_and_deck_2: tuple[Player, Deck],
     match: dict,
-):
+) -> tuple[bool, Deck | None, Deck | None]:
 
     parsed_time = to_mysql_datetime(match[BATTLE_TIME])
     sorted_player_decks = sorted(
@@ -171,17 +246,33 @@ def update_match_history_1v1(
         .first()
     )
 
-    if not existing_battle:
-        new_battle = Battle(
-            first_player_code=first_player.user_code,
-            second_player_code=second_player.user_code,
-            first_deck_id=first_deck.deck_id,
-            second_deck_id=second_deck.deck_id,
-            battle_type=match[BATTLE_TYPE],
-            battle_time=parsed_time,
-            raw_data=match,
-        )
-        db.add(new_battle)
+    if existing_battle:
+        return True, None, None
+
+    # ---- determine winner/loser ----
+    # Replace these with your actual crown / winner fields
+    is_won_team = is_winner_team(match)
+
+    if is_won_team:
+        winner_player, winner_deck = player_and_deck_1
+        loser_player, loser_deck = player_and_deck_2
+    else:
+        winner_player, winner_deck = player_and_deck_2
+        loser_player, loser_deck = player_and_deck_1
+
+    new_battle = Battle(
+        first_player_code=first_player.user_code,
+        second_player_code=second_player.user_code,
+        first_deck_id=first_deck.deck_id,
+        second_deck_id=second_deck.deck_id,
+        winner_player_code=winner_player.user_code,
+        winner_deck_id=winner_deck.deck_id,
+        battle_type=match[BATTLE_TYPE],
+        battle_time=parsed_time,
+    )
+    db.add(new_battle)
+
+    return False, winner_deck, loser_deck
 
 
 def main():
