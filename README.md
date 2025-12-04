@@ -1,44 +1,32 @@
-## Quick Start (Docker Compose)
+# CrCardGuess
+
+A full-stack card-guessing (or card-based) game API + service, built with Python, SQLAlchemy, Docker, and more.
+
+## 🚀 What is CrCardGuess
+
+CrCardGuess is a backend service implementing a game where users can guess cards (or perform some “card guess” logic) — with user authentication, scoring, leaderboards, scheduled resets and reward distribution.  
+It uses JWT authentication, a MySQL database (via SQLAlchemy), Docker for containerization, and defines a modular structure for models, schemas, database config, utilities, etc.
+
+## ✅ Features
+
+- User signup / login with email + password (hashed with bcrypt via Passlib)  
+- JWT-based stateless authentication (token contains `sub = user_id`, expiry configurable via environment variables)  
+- User scoreboard and rewards per game mode / period  
+- Automatic scheduled resets and reward distributions using a scheduler (cron jobs)  
+- Clean database layer using SQLAlchemy ORM (MySQL 8)  
+- Modular project structure (separate modules for API logic, DB models, schemas, utilities)  
+- Docker + `docker-compose.yml` support for easy setup and deployment  
+
+## 📦 Getting Started
+
+### Prerequisites
+
+- Docker & Docker Compose  
+- (Optional) Python 3.x and pip, if you want to run without Docker  
+- MySQL (if not using Dockerized DB)  
+
+### Quick Start (with Docker Compose)
 
 ```bash
-cp .env.sample .env
+cp .env.sample .env   # copy example env file and configure as needed  
 docker compose up --build
-```
-
-- API: http://localhost:8000
-- Docs: http://localhost:8000/docs
-- Adminer (DB UI): http://localhost:8080
-
-## Design Choices
-- JWT for Authentication: Secure stateless user sessions.
-- SQLAlchemy ORM: Clean database access and migrations.
-- Scheduler: Automated tasks for resets and reward distribution.
-- Modular Structure: Separate files for models, schemas, database config, and utilities.
-
-### Auth
-- Email/password with **bcrypt** hashing (passlib).
-- JWT (signed with HS256) containing `sub = user_id`. Expiry configurable via env.
-- Protected endpoints require `Authorization: Bearer <token>`.
-
-### Database
-- **MySQL 8** via SQLAlchemy models:
-  - `users(id, email, password_hash, coins)`
-  - `scores(user_id, score, created_at, game_mode, period_type, period_start, period_end)`
-  - `rewards(user_id, game_mode, period_type, period_start, period_end, place, amount)`
-- **No destructive resets**: the active leaderboard is the subset of `scores` whose `(period_type, game_mode, period_start, period_end)` matches the **current** period. A new period implicitly “clears” the leaderboard because new submissions are placed under the new period keys.
-
-### Reset & Rewards Strategy
-- APScheduler cron jobs (UTC) run at boundaries and compute **previous** period winners by highest *best score per user*.
-- Top 3 rewarded with 300/250/200 coins. Rewards are added to `users.coins`.
-
-### Leaderboard Semantics
-- **Best score per user** defines rank within a period.
-- Ties are handled with **dense ranking** behavior on the `/top` endpoint.
-
-### Assumptions & Trade-offs
-- Since the prompt did not specify any game “modes,” I defined only the `run` and `campaign` modes.
-- Each user will be ranked and awarded based on their highest score, even if their other scores are higher than those of other players.
-
-## Notes
-- Timezone is **UTC** for all period calculations.
-- Adminer can connect with `db`, system `MySQL`, user `cr_card_app`, password `cr_card_app`, database `cr_card_app`.
